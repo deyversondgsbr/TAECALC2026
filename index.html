@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Contracheque TAE (Lei 15.141/2025)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        input:focus, select:focus { outline: none; box-shadow: 0 0 0 2px #3b82f6; }
+        .transition-all { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen p-4 md:p-8 flex items-center justify-center">
+
+    <div class="max-w-4xl w-full mx-auto">
+        <!-- HEADER -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-black text-blue-900 tracking-tight mb-2">Calculadora PCCTAE 2026</h1>
+            <p class="text-slate-500 font-medium">Cálculos exatos baseados na portaria de reajuste do RPPS e IRRF</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- COLUNA ESQUERDA: PARÂMETROS -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+                <h2 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">Parâmetros do Servidor</h2>
+                
+                <!-- Nível e Padrão de Vencimento -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nível do Cargo</label>
+                        <select id="nivel" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all">
+                            <option value="D" selected>Nível D (Técnico)</option>
+                            <option value="E">Nível E (Superior)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Padrão Atual</label>
+                        <select id="padrao" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all">
+                            <!-- Opções geradas via JS (1 a 19) -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Capacitação Checkbox (Dinâmico) -->
+                <div id="boxCapacitacao" class="bg-blue-50 border border-blue-100 p-4 rounded-xl hidden transition-all">
+                    <label class="flex items-start cursor-pointer">
+                        <div class="flex-shrink-0 mt-0.5">
+                            <input type="checkbox" id="possuiCursos" class="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 transition-all">
+                        </div>
+                        <div class="ml-3">
+                            <span class="block text-sm font-bold text-blue-900">Possui os cursos exigidos (Capacitação)?</span>
+                            <span class="block text-xs text-blue-700 mt-1 leading-tight">Aplica o salto duplo (+2 padrões: 1 mérito + 1 capacitação).</span>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- IQ -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Incentivo à Qualificação (IQ)</label>
+                    <select id="iq" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all">
+                        <option value="0.0">0% - Sem IQ</option>
+                        <option value="0.30" selected>30% - Pós-Graduação</option>
+                        <option value="0.52">52% - Mestrado</option>
+                        <option value="0.75">75% - Doutorado</option>
+                    </select>
+                </div>
+                
+                <!-- Auxílios -->
+                <div class="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Alimentação (R$)</label>
+                        <input type="text" id="alimentacao" value="1192,00" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all" oninput="formatarEntrada(this)">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Creche (R$)</label>
+                        <input type="text" id="creche" value="0,00" placeholder="0,00" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all" oninput="formatarEntrada(this)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUNA DIREITA: CONTRACHEQUE -->
+            <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden flex flex-col">
+                <div class="bg-blue-900 text-white p-5 flex justify-between items-center">
+                    <h2 class="text-xl font-bold">Demonstrativo</h2>
+                    <div class="text-right">
+                        <span class="block text-xs text-blue-200 font-medium uppercase tracking-wider">Padrão Efetivo</span>
+                        <span id="lblPadrao" class="block text-xl font-black text-white">D-1</span>
+                    </div>
+                </div>
+
+                <div class="p-6 flex-grow flex flex-col justify-between">
+                    <div class="space-y-3 text-sm">
+                        
+                        <!-- Receitas -->
+                        <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                            <span class="text-slate-500 font-medium">Vencimento Básico</span>
+                            <span id="resVB" class="font-bold text-slate-800">R$ 0,00</span>
+                        </div>
+                        <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                            <span class="text-slate-500 font-medium">Incentivo à Qualificação (IQ)</span>
+                            <span id="resIQ" class="font-bold text-emerald-600">+ R$ 0,00</span>
+                        </div>
+                        <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                            <span class="text-slate-500 font-medium">Auxílios (Isentos)</span>
+                            <span id="resAuxilios" class="font-bold text-emerald-600">+ R$ 0,00</span>
+                        </div>
+                        
+                        <!-- Subtotal Bruto -->
+                        <div class="flex justify-between items-center pt-2 pb-2">
+                            <span class="text-slate-800 font-black">Bruto (Base Tributável)</span>
+                            <span id="resBrutoTributavel" class="font-black text-slate-800 text-lg">R$ 0,00</span>
+                        </div>
+
+                        <!-- Descontos -->
+                        <div class="bg-rose-50 rounded-xl p-4 mt-4 space-y-2 border border-rose-100">
+                            <div class="flex justify-between items-center">
+                                <span class="text-rose-700 font-medium">PSS (Previdência)</span>
+                                <span id="resPSS" class="font-bold text-rose-700">- R$ 0,00</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-rose-700 font-medium">IRRF (Retido na Fonte)</span>
+                                <span id="resIRRF" class="font-bold text-rose-700">- R$ 0,00</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t border-rose-200/60">
+                                <span class="text-rose-900 font-black">Total de Descontos</span>
+                                <span id="resDescontos" class="font-black text-rose-900">- R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LÍQUIDO FINAL -->
+                    <div class="mt-6 bg-emerald-50 border border-emerald-200 rounded-xl p-5 flex items-center justify-between">
+                        <div>
+                            <span class="block text-emerald-800 font-black uppercase text-xs tracking-wider">Líquido a Receber</span>
+                            <span class="block text-emerald-600 text-xs font-medium mt-0.5">Total depositado em conta</span>
+                        </div>
+                        <span id="resLiquido" class="text-3xl font-black text-emerald-700">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        // Tabela Oficial de Vencimentos PCCTAE (2026)
+        const TABELA_VB = {
+            'D': [0, 3181.39, 3311.83, 3447.61, 3588.97, 3736.11, 3889.29, 4048.75, 4214.75, 4387.56, 4567.45, 4754.71, 4949.66, 5152.59, 5363.85, 5583.77, 5812.70, 6051.02, 6299.11, 6557.38],
+            'E': [0, 5215.39, 5429.23, 5651.82, 5883.55, 6124.77, 6375.89, 6637.30, 6909.43, 7192.72, 7487.62, 7794.61, 8114.19, 8446.87, 8793.19, 9153.72, 9529.02, 9919.71, 10326.42, 10749.80]
+        };
+
+        // Popular o Select de Padrões
+        const selectPadrao = document.getElementById('padrao');
+        for(let i = 1; i <= 19; i++) {
+            selectPadrao.innerHTML += `<option value="${i}">Padrão ${i}</option>`;
+        }
+
+        // Funções de Utilidade (Tratamento de Moedas e UI)
+        function formatarEntrada(elemento) {
+            let valor = elemento.value.replace(/[^\d,]/g, ""); 
+            let partes = valor.split(',');
+            if (partes.length > 2) valor = partes[0] + ',' + partes.slice(1).join(''); 
+            elemento.value = valor;
+            calcularValores(); 
+        }
+
+        function parseMoeda(id) {
+            let valor = document.getElementById(id).value;
+            if(!valor) return 0;
+            return parseFloat(valor.replace(/\./g, '').replace(',', '.')) || 0;
+        }
+
+        function formatarSaida(valor) {
+            return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function verificarExibicaoCapacitacao() {
+            const padrao = parseInt(document.getElementById('padrao').value);
+            const box = document.getElementById('boxCapacitacao');
+            
+            // Exibe a caixa de capacitação APENAS nos marcos exatos definidos (5, 10 e 15)
+            if (padrao === 5 || padrao === 10 || padrao === 15) {
+                box.classList.remove('hidden');
+            } else {
+                box.classList.add('hidden');
+                document.getElementById('possuiCursos').checked = false;
+            }
+            calcularValores();
+        }
+
+        // 1. Cálculo exato do PSS aplicando "Math.floor" por fatia (Evita divergência de centavos)
+        function calcularPSSExato(basepss) {
+            const faixas = [1621.00, 2902.84, 4354.27, 8475.55, 14514.30, 29028.57, 56605.73];
+            const aliquotas = [0.075, 0.09, 0.12, 0.14, 0.145, 0.165, 0.19, 0.22];
+            
+            return aliquotas.reduce((acc, aliq, i) => {
+                const teto = faixas[i] || Infinity;
+                const piso = faixas[i - 1] || 0;
+                // Encontra a porção do salário que entra nesta fatia
+                const base_faixa = Math.max(0, Math.min(basepss, teto) - piso);
+                // Trunca (floor) cada fatia antes de somar ao acumulador (idêntico ao sistema SIAPE)
+                return acc + (Math.floor(base_faixa * aliq * 100) / 100);
+            }, 0);
+        }
+
+        // 2. Cálculo do IRRF com regras atualizadas da Isenção R$ 5.000 (2026)
+        function calcularIRRFExato(rendTributavelBruta, pss) {
+            const deducaoSimp = 607.20; 
+            // A lei permite utilizar a maior dedução: O desconto oficial do PSS ou a simplificada.
+            const deducaoUtilizada = Math.max(pss, deducaoSimp);
+            const baseirrf = rendTributavelBruta - deducaoUtilizada;
+
+            let aliquota = 0;
+            let desconto = 0;
+
+            // Tabela Progressiva Padrão (Valores a partir de Maio 2025/2026)
+            if (baseirrf <= 2428.80) {
+                aliquota = 0;
+            } else if (baseirrf <= 2826.65) {
+                aliquota = baseirrf * 0.075 - 182.16;
+            } else if (baseirrf <= 3751.05) {
+                aliquota = baseirrf * 0.15 - 394.16;
+            } else if (baseirrf <= 4664.68) {
+                aliquota = baseirrf * 0.225 - 675.49;
+            } else {
+                aliquota = baseirrf * 0.275 - 908.73;
+            }
+
+            // Regras Específicas de Isenção e Redutor (Nova Lei IR 2026)
+            // A base para avaliação aqui volta a ser a Renda Tributável Bruta (antes das deduções)
+            if (rendTributavelBruta <= 5000.00) {
+                desconto = aliquota; // Zera o imposto
+            } else if (rendTributavelBruta < 7350.00) {
+                desconto = 978.62 - 0.133145 * rendTributavelBruta;
+            }
+
+            aliquota = (aliquota - desconto) > 0 ? (aliquota - desconto) : 0;
+            
+            // Trunca as casas decimais irrelevantes
+            return Math.floor(aliquota * 100) / 100;
+        }
+
+        function calcularValores() {
+            const nivel = document.getElementById('nivel').value;
+            const padraoBase = parseInt(document.getElementById('padrao').value);
+            const possuiCursos = document.getElementById('possuiCursos').checked;
+            const iqPerc = parseFloat(document.getElementById('iq').value);
+
+            // Determinar Saltos de Capacitação
+            let saltosExtras = 0;
+            if (possuiCursos) {
+                // Aplica exatamente +2 padrões no momento do salto, conforme a lógica (5->7, 10->12, 15->17)
+                saltosExtras = 2;
+            }
+
+            let padraoEfetivo = padraoBase + saltosExtras;
+            if (padraoEfetivo > 19) padraoEfetivo = 19;
+
+            // Variáveis Financeiras
+            const vb = TABELA_VB[nivel][padraoEfetivo];
+            // O sistema arredonda o IQ para baixo antes de somar (Math.floor)
+            const iq = Math.floor(vb * iqPerc * 100) / 100; 
+            
+            const tributavelBruto = vb + iq;
+            
+            const alimentacao = parseMoeda('alimentacao');
+            const creche = parseMoeda('creche');
+            const totalAuxilios = alimentacao + creche;
+
+            // Chamar funções exatas de impostos
+            const pss = calcularPSSExato(tributavelBruto);
+            const irrf = calcularIRRFExato(tributavelBruto, pss);
+            const totalDescontos = pss + irrf;
+
+            const liquido = tributavelBruto + totalAuxilios - totalDescontos;
+
+            // Atualizar UI
+            document.getElementById('lblPadrao').innerText = `${nivel}-${padraoEfetivo}`;
+            
+            document.getElementById('resVB').innerText = `R$ ${formatarSaida(vb)}`;
+            document.getElementById('resIQ').innerText = `+ R$ ${formatarSaida(iq)}`;
+            document.getElementById('resAuxilios').innerText = `+ R$ ${formatarSaida(totalAuxilios)}`;
+            document.getElementById('resBrutoTributavel').innerText = `R$ ${formatarSaida(tributavelBruto)}`;
+            
+            document.getElementById('resPSS').innerText = `- R$ ${formatarSaida(pss)}`;
+            document.getElementById('resIRRF').innerText = `- R$ ${formatarSaida(irrf)}`;
+            document.getElementById('resDescontos').innerText = `- R$ ${formatarSaida(totalDescontos)}`;
+            
+            document.getElementById('resLiquido').innerText = `R$ ${formatarSaida(liquido)}`;
+        }
+
+        const selects = ['nivel', 'padrao', 'iq', 'possuiCursos'];
+        selects.forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                if(id === 'padrao') verificarExibicaoCapacitacao();
+                else calcularValores();
+            });
+        });
+
+        // Executar na primeira carga
+        window.onload = calcularValores;
+    </script>
+</body>
+</html>
