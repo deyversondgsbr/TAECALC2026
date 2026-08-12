@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora PCCTAE 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; color: #1E293B; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .card-box { background: #FFFFFF; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.02); border-radius: 12px; }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #0284C7; cursor: pointer; margin-top: -6px; box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.1); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: #E2E8F0; border-radius: 4px; }
+
+        @media print {
+            body { background: #FFFFFF; padding: 0; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            .card-box { border: 1px solid #CBD5E1; box-shadow: none; padding: 20px; }
+            * { color: #000 !important; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex justify-center">
+
+    <main class="max-w-6xl w-full space-y-6">
+        
+        <!-- HEADER -->
+        <header class="mb-2 border-b border-slate-200 pb-4 no-print flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
+                    Calculadora PCCTAE <span class="text-sky-600">2026</span>
+                </h1>
+                
+            </div>
+            <div class="flex gap-2">
+                <button onclick="window.print()" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-xl text-xs md:text-sm font-medium transition-colors shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Exportar Contracheque (PDF)
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- PAINEL DE CONTROLES (ESQUERDA) -->
+            <div class="lg:col-span-5 space-y-6 no-print">
+                
+                <!-- CARREIRA -->
+                <div class="card-box p-5 space-y-4">
+                    <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 pb-2">
+                        1. Dados da Carreira
+                    </h2>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nível de Classificação</label>
+                        <div class="flex gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+                            <button id="btn-nivel-d" class="flex-1 py-2 rounded-lg text-xs md:text-sm font-bold transition-all bg-white text-sky-700 shadow-sm border border-slate-200" onclick="setNivel('D')">CLASSE D</button>
+                            <button id="btn-nivel-e" class="flex-1 py-2 rounded-lg text-xs md:text-sm font-bold transition-all text-slate-600 hover:text-slate-900 border border-transparent" onclick="setNivel('E')">CLASSE E</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-end mb-1.5">
+                            <label class="block text-xs font-semibold text-slate-600">Padrão de Vencimento</label>
+                            <span class="text-sm font-mono text-sky-700 font-bold bg-sky-50 px-2 py-0.5 rounded border border-sky-100" id="label-padrao">1</span>
+                        </div>
+                        <input type="range" id="input-padrao" min="1" max="19" value="1" oninput="updateState()">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>Padrão 1</span>
+                            <span>Padrão 19 (Topo)</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Titulação (Incentivo à Qualificação - IQ)</label>
+                        <select id="input-iq" class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl p-2.5 outline-none focus:border-sky-500 text-xs md:text-sm font-medium" onchange="updateState()">
+                            <!-- Preenchido dinamicamente via JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- AUXÍLIOS E ADICIONAIS -->
+                <div class="card-box p-5 space-y-4">
+                    <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 pb-2">
+                        2. Adicionais e Auxílios
+                    </h2>
+                    
+                    <!-- Transporte Isolado -->
+                    <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
+                        <label class="flex items-center cursor-pointer select-none">
+                            <input type="checkbox" id="check-transporte" class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300" onchange="updateState()">
+                            <span class="ml-2 text-xs font-bold text-slate-700">Incluir Auxílio-Transporte no Líquido</span>
+                        </label>
+                        <div id="box-transporte" class="grid grid-cols-2 gap-2 opacity-40 pointer-events-none transition-opacity">
+                            <div>
+                                <label class="block text-[10px] font-semibold text-slate-500 mb-1">Gasto Diário (R$)</label>
+                                <input type="number" id="input-transporte" value="30" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-mono outline-none focus:border-sky-500" oninput="updateState()">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-slate-500 mb-1">Dias Úteis</label>
+                                <input type="number" id="input-dias" value="22" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-mono outline-none focus:border-sky-500" oninput="updateState()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nº Dep. Creche</label>
+                            <input type="number" id="input-creche" min="0" max="5" value="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono outline-none focus:border-sky-500" oninput="updateState()">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nº Dep. IRPF</label>
+                            <input type="number" id="input-irpf" min="0" max="10" value="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono outline-none focus:border-sky-500" oninput="updateState()">
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-100 pt-3 space-y-3">
+                        <label class="flex items-center cursor-pointer select-none">
+                            <input type="checkbox" id="check-ferias" class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300" onchange="updateState()">
+                            <span class="ml-2 text-xs font-semibold text-slate-700">Adicional 1/3 de Férias (Isento de PSS e IRPF)</span>
+                        </label>
+
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">13º Salário (Gratificação Natalina)</label>
+                            <select id="select-decimo" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-2 text-xs font-medium outline-none focus:border-sky-500" onchange="updateState()">
+                                <option value="nenhum">Não incluir</option>
+                                <option value="parcela1">1ª Parcela (Adiantamento 50% limpo)</option>
+                                <option value="parcela2">2ª Parcela (Incidência de PSS e IRPF)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- PAINEL DE RESULTADOS (DIREITA) -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- CARDS DE DESTAQUE -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 no-print">
+                    <div class="card-box p-4 border-l-4 border-l-slate-700">
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-1">Total Bruto</span>
+                        <span class="text-lg md:text-xl font-mono font-bold text-slate-800 block" id="res-bruto">R$ 0,00</span>
+                        <span class="text-[10px] text-slate-500 block mt-0.5" id="res-auxilios">+ Auxílios</span>
+                    </div>
+                    
+                    <div class="card-box p-4 border-l-4 border-l-rose-500">
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-1">Descontos Legais</span>
+                        <span class="text-lg md:text-xl font-mono font-bold text-rose-600 block" id="res-descontos">R$ 0,00</span>
+                        <span class="text-[10px] text-slate-500 block mt-0.5">CPSS e IRPF</span>
+                    </div>
+                    
+                    <div class="card-box p-4 border-l-4 border-l-sky-500 bg-sky-50/40">
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-sky-700 block mb-1">Líquido a Receber</span>
+                        <span class="text-xl md:text-2xl font-bold font-mono text-sky-600 block" id="res-liquido">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- EXTRATO DETALHADO (CONTRACHEQUE) -->
+                <div class="card-box p-6 print-only-box" id="area-contracheque">
+                    <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+                        <div>
+                            <h3 class="text-sm md:text-base font-bold text-slate-800">Extrato Demonstrativo (Contracheque)</h3>
+                            <p class="text-xs text-slate-400">Projeção Oficial Lei nº 15.367/2026</p>
+                        </div>
+                        <span class="text-xs font-mono text-slate-500 px-2.5 py-1 bg-slate-100 rounded-lg border border-slate-200">BRL</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                        <div>
+                            <h4 class="text-[11px] uppercase tracking-wider text-emerald-700 mb-3 font-bold border-b border-emerald-100 pb-1">Rendimentos (+)</h4>
+                            <div class="space-y-1.5 font-mono text-xs" id="lista-proventos"></div>
+                            <div class="mt-3 pt-2 border-t border-slate-200 flex justify-between text-slate-800 font-bold text-xs">
+                                <span>Rendimento Bruto Total</span>
+                                <span id="soma-proventos">R$ 0,00</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-[11px] uppercase tracking-wider text-rose-700 mb-3 font-bold border-b border-rose-100 pb-1">Descontos (-)</h4>
+                            <div class="space-y-1.5 font-mono text-xs" id="lista-descontos"></div>
+                            <div class="mt-3 pt-2 border-t border-slate-200 flex justify-between text-slate-800 font-bold text-xs">
+                                <span>Total Descontos</span>
+                                <span id="soma-descontos">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BASES DE CÁLCULO -->
+                    <div class="mt-6 pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block">Base CPSS</span>
+                            <span class="font-bold text-slate-700" id="base-cpss">R$ 0,00</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 block">Base IRRF</span>
+                            <span class="font-bold text-slate-700" id="base-irrf">R$ 0,00</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 block">Rend. Tributável</span>
+                            <span class="font-bold text-slate-700" id="rend-trib">R$ 0,00</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 block">Deduções IR</span>
+                            <span class="font-bold text-slate-700" id="deducoes-ir">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CENÁRIOS POR TITULAÇÃO -->
+                <div class="card-box p-6 no-print">
+                    <div class="mb-4">
+                        <h3 class="text-xs md:text-sm font-bold text-slate-800">Projeção Comparativa por Titulação</h3>
+                        <p class="text-xs text-slate-400">Valor líquido estimado mantendo o padrão atual e as demais opções.</p>
+                    </div>
+                    <div class="space-y-3" id="container-cenarios"></div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const BASES = { 'D': 3181.39, 'E': 5215.39 };
+        const AUXILIO_ALIMENTACAO = 1192.00;
+        const TETO_RGPS = 8475.55;
+        
+        const TABELA_IQ_D = [
+            { id: 'none', label: 'Exigência Mínima', pct: 0 },
+            { id: 'graduacao', label: 'Graduação', pct: 0.25 },
+            { id: 'especializacao', label: 'Especialização', pct: 0.30 },
+            { id: 'mestrado', label: 'Mestrado', pct: 0.52 },
+            { id: 'doutorado', label: 'Doutorado', pct: 0.75 }
+        ];
+
+        const TABELA_IQ_E = [
+            { id: 'none', label: 'Graduação (Requisito)', pct: 0 },
+            { id: 'especializacao', label: 'Especialização', pct: 0.30 },
+            { id: 'mestrado', label: 'Mestrado', pct: 0.52 },
+            { id: 'doutorado', label: 'Doutorado', pct: 0.75 }
+        ];
+
+        let state = {
+            nivel: 'D', padrao: 1, iq: 'none',
+            incluirTransporte: false, custoDiarioTransporte: 30, diasUteis: 22,
+            dependentesCreche: 0, dependentesIrpf: 0,
+            incluirFerias: false, decimoSazonal: 'nenhum'
+        };
+
+        const formatBRL = (valor) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        function calcPSS(basepss) {
+            const faixas = [1621.00, 2902.84, 4354.27, 8475.55, 14514.30, 29028.57, 56605.73];
+            return [0.075, 0.09, 0.12, 0.14, 0.145, 0.165, 0.19, 0.22].reduce((acc, aliq, i) => {
+                const teto = faixas[i] || Infinity;
+                const piso = faixas[i - 1] || 0;
+                const base = Math.max(0, Math.min(basepss, teto) - piso);
+                return acc + (Math.floor(base * aliq * 100) / 100);
+            }, 0);
+        }
+
+        function calcIRPF(baseTributavel, brutoTotal) {
+            let aliquota = 0;
+            if (baseTributavel <= 2259.20) {
+                aliquota = 0;
+            } else if (baseTributavel <= 2826.65) {
+                aliquota = baseTributavel * 0.075 - 182.16;
+            } else if (baseTributavel <= 3751.05) {
+                aliquota = baseTributavel * 0.15 - 394.16;
+            } else if (baseTributavel <= 4664.68) {
+                aliquota = baseTributavel * 0.225 - 675.49;
+            } else {
+                aliquota = baseTributavel * 0.275 - 908.73;
+            }
+
+            let desconto = 0;
+            if (brutoTotal <= 5000.00) {
+                desconto = aliquota;
+            } else if (brutoTotal < 7350.00) {
+                desconto = 978.62 - 0.133145 * brutoTotal;
+            }
+
+            let final = aliquota - desconto;
+            return final > 0 ? Math.floor(final * 100) / 100 : 0;
+        }
+
+        function valorCreche(rem, n) {
+            const faixas = [8592.85, 17185.7, 25778.55, 34371.4];
+            const teto = 526.34;
+            let desc = 0;
+            if (rem < faixas[0]) desc = 0.05;
+            else if (rem <= faixas[1]) desc = 0.10;
+            else if (rem <= faixas[2]) desc = 0.15;
+            else if (rem <= faixas[3]) desc = 0.20;
+            else desc = 0.25;
+            
+            const bruto = teto * n;
+            const cotaParte = bruto * desc;
+            return { bruto, cotaParte };
+        }
+
+        function valorTransporte(vencimento, gasto, dias) {
+            if (isNaN(gasto) || gasto <= 0 || dias <= 0) return 0;
+            const gastoDiarioEfetivo = Math.ceil((gasto - 1) / 0.2) * 0.2 + 1;
+            const auxilio = (gastoDiarioEfetivo - 0.06 * (vencimento / 30)) * dias;
+            return auxilio < 0 ? 0 : auxilio;
+        }
+
+        function simular(simIqId = state.iq) {
+            const vb = Math.round((BASES[state.nivel] * Math.pow(1.041, state.padrao - 1)) * 100) / 100;
+            
+            const tabelaAtual = state.nivel === 'E' ? TABELA_IQ_E : TABELA_IQ_D;
+            let pctIq = tabelaAtual.find(i => i.id === simIqId)?.pct || 0;
+
+            const valorIq = Math.floor(vb * pctIq * 100) / 100;
+            const bruta = vb + valorIq;
+
+            const crecheObj = valorCreche(bruta, state.dependentesCreche);
+            const crecheBruto = crecheObj.bruto;
+            const cotaCreche = crecheObj.cotaParte;
+            
+            let proventoTransp = 0;
+            let descontoTransp = 0;
+            if (state.incluirTransporte && state.diasUteis > 0) {
+                const auxLiq = valorTransporte(vb, state.custoDiarioTransporte, state.diasUteis);
+                if (auxLiq > 0) {
+                    proventoTransp = state.custoDiarioTransporte * state.diasUteis;
+                    descontoTransp = proventoTransp - auxLiq;
+                }
+            }
+
+            let basePss = bruta;
+            if (basePss > TETO_RGPS) {
+                basePss = TETO_RGPS;
+            }
+            const pss = calcPSS(basePss);
+
+            const deducaoDep = state.dependentesIrpf * 189.59;
+            const deducaoSimp = 607.20;
+            const deducoesLegais = pss + deducaoDep;
+            const deducaoAplicada = Math.max(deducoesLegais, deducaoSimp);
+            
+            const baseIrpf = bruta - deducaoAplicada;
+            const irpf = calcIRPF(baseIrpf, bruta);
+
+            let ferias = 0;
+            let provento13 = 0, descontoPss13 = 0, descontoIrpf13 = 0, descontoAdiantamento13 = 0;
+
+            if (state.incluirFerias) {
+                ferias = bruta / 3;
+            }
+
+            if (state.decimoSazonal === 'parcela1') {
+                provento13 = bruta / 2;
+            } else if (state.decimoSazonal === 'parcela2') {
+                provento13 = bruta;
+                let basePss13 = bruta > TETO_RGPS ? TETO_RGPS : bruta;
+                descontoPss13 = calcPSS(basePss13);
+                let dedAplic13 = Math.max(descontoPss13 + deducaoDep, deducaoSimp);
+                let baseIrpf13 = bruta - dedAplic13;
+                descontoIrpf13 = calcIRPF(baseIrpf13, bruta);
+                descontoAdiantamento13 = bruta / 2;
+            }
+
+            const totalBruto = bruta + AUXILIO_ALIMENTACAO + crecheBruto + proventoTransp + ferias + provento13;
+            const totalDesc = pss + irpf + cotaCreche + descontoTransp + descontoPss13 + descontoIrpf13 + descontoAdiantamento13;
+
+            return {
+                vb, valorIq, bruta,
+                pss, basePss, irpf, baseIrpf, deducaoAplicada, rendTrib: bruta,
+                crecheBruto, cotaCreche, alimentacao: AUXILIO_ALIMENTACAO,
+                proventoTransp, descontoTransp,
+                ferias, provento13, descontoPss13, descontoIrpf13, descontoAdiantamento13,
+                totalBruto, totalDesc, liquido: totalBruto - totalDesc
+            };
+        }
+
+        function renderRow(label, valor, desc = '') {
+            if (valor <= 0) return '';
+            return `
+                <div class="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
+                    <div class="flex flex-col">
+                        <span class="text-slate-700 text-xs font-medium">${label}</span>
+                        ${desc ? `<span class="text-[10px] text-slate-400">${desc}</span>` : ''}
+                    </div>
+                    <span class="font-mono text-xs text-slate-800 font-semibold">${formatBRL(valor)}</span>
+                </div>
+            `;
+        }
+
+        function render() {
+            const res = simular();
+
+            let brutaHeader = res.bruta;
+            if (state.incluirFerias) brutaHeader += res.ferias;
+            if (state.decimoSazonal === 'parcela1') brutaHeader += res.provento13;
+            if (state.decimoSazonal === 'parcela2') brutaHeader += (res.provento13 - res.descontoAdiantamento13);
+
+            document.getElementById('res-bruto').innerText = formatBRL(brutaHeader);
+            const sumAux = res.alimentacao + res.crecheBruto - res.cotaCreche + (res.proventoTransp - res.descontoTransp);
+            document.getElementById('res-auxilios').innerText = `+ ${formatBRL(sumAux)} (Auxílios)`;
+            document.getElementById('res-descontos').innerText = formatBRL(res.totalDesc);
+            document.getElementById('res-liquido').innerText = formatBRL(res.liquido);
+
+            document.getElementById('base-cpss').innerText = formatBRL(res.basePss);
+            document.getElementById('base-irrf').innerText = formatBRL(res.baseIrpf);
+            document.getElementById('rend-trib').innerText = formatBRL(res.rendTrib);
+            document.getElementById('deducoes-ir').innerText = formatBRL(res.deducaoAplicada);
+
+            let htmlProv = renderRow('Vencimento Básico', res.vb, `Classe ${state.nivel} - Padrão ${state.padrao}`);
+            const tabelaAtual = state.nivel === 'E' ? TABELA_IQ_E : TABELA_IQ_D;
+            let labelIqExibida = tabelaAtual.find(i => i.id === state.iq)?.label || 'Exigência Mínima';
+            htmlProv += renderRow('Incentivo à Qualificação (IQ)', res.valorIq, labelIqExibida);
+            htmlProv += renderRow('Auxílio Alimentação', res.alimentacao);
+            htmlProv += renderRow('Auxílio Pré-Escolar (Creche)', res.crecheBruto);
+            if (res.proventoTransp > 0) htmlProv += renderRow('Auxílio Transporte (Bruto)', res.proventoTransp);
+            if (res.ferias > 0) htmlProv += renderRow('Adicional 1/3 Férias', res.ferias, 'Isento de impostos');
+            if (state.decimoSazonal === 'parcela1') htmlProv += renderRow('13º Salário (1ª Parcela)', res.provento13, 'Adiantamento 50%');
+            if (state.decimoSazonal === 'parcela2') htmlProv += renderRow('13º Salário (Integral)', res.provento13);
+            
+            document.getElementById('lista-proventos').innerHTML = htmlProv;
+            document.getElementById('soma-proventos').innerText = formatBRL(res.totalBruto);
+
+            let htmlDesc = renderRow('Contribuição Previdência (CPSS)', res.pss, `Base: ${formatBRL(res.basePss)}`);
+            htmlDesc += renderRow('Imposto de Renda (IRPF)', res.irpf, res.irpf === 0 ? 'Isento por lei' : '');
+            if (res.descontoTransp > 0) htmlDesc += renderRow('Cota Transporte (6% VB)', res.descontoTransp);
+            if (res.cotaCreche > 0) htmlDesc += renderRow('Cota Parte Auxílio-Creche', res.cotaCreche);
+            
+            if (state.decimoSazonal === 'parcela2') {
+                htmlDesc += renderRow('Abatimento 1ª Parc. 13º', res.descontoAdiantamento13);
+                htmlDesc += renderRow('CPSS sobre 13º', res.descontoPss13);
+                htmlDesc += renderRow('IRPF sobre 13º', res.descontoIrpf13);
+            }
+            
+            document.getElementById('lista-descontos').innerHTML = htmlDesc || '<div class="text-xs text-slate-400 py-2">Nenhum desconto aplicado.</div>';
+            document.getElementById('soma-descontos').innerText = formatBRL(res.totalDesc);
+
+            const tabelaCenarios = state.nivel === 'E' ? TABELA_IQ_E : TABELA_IQ_D;
+            const maxLiquido = Math.max(...tabelaCenarios.map(iq => simular(iq.id).liquido));
+            let htmlCenarios = '';
+            
+            tabelaCenarios.forEach(c => {
+                const r = simular(c.id);
+                const isCurrent = c.id === state.iq;
+                const pct = (r.liquido / maxLiquido) * 100;
+                const dif = r.liquido - res.liquido;
+                let difHtml = dif > 0 ? `<span class="text-[10px] font-bold text-emerald-600 ml-1">(+${formatBRL(dif)})</span>` : '';
+
+                htmlCenarios += `
+                    <div>
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="text-xs font-medium ${isCurrent ? 'text-sky-700 font-bold' : 'text-slate-600'}">
+                                ${c.label} ${isCurrent ? '<span class="text-[9px] bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded ml-1">ATUAL</span>' : ''} ${difHtml}
+                            </span>
+                            <span class="font-mono text-xs ${isCurrent ? 'text-slate-900 font-bold' : 'text-slate-600'}">${formatBRL(r.liquido)}</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-500 ${isCurrent ? 'bg-sky-500' : 'bg-slate-300'}" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('container-cenarios').innerHTML = htmlCenarios;
+        }
+
+        window.setNivel = function(n) {
+            state.nivel = n;
+            const on = "flex-1 py-2 rounded-lg text-xs md:text-sm font-bold transition-all bg-white text-sky-700 shadow-sm border border-slate-200";
+            const off = "flex-1 py-2 rounded-lg text-xs md:text-sm font-bold transition-all text-slate-600 hover:text-slate-900 border border-transparent";
+            document.getElementById('btn-nivel-d').className = n === 'D' ? on : off;
+            document.getElementById('btn-nivel-e').className = n === 'E' ? on : off;
+            
+            const selectIq = document.getElementById('input-iq');
+            selectIq.innerHTML = '';
+            
+            const tabelaAlvo = n === 'E' ? TABELA_IQ_E : TABELA_IQ_D;
+            tabelaAlvo.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.text = `${item.label} (+${item.pct * 100}%)`;
+                selectIq.appendChild(opt);
+            });
+
+            state.iq = tabelaAlvo[0].id;
+            selectIq.value = state.iq;
+            updateState();
+        }
+
+        window.updateState = function() {
+            state.padrao = parseInt(document.getElementById('input-padrao').value) || 1;
+            document.getElementById('label-padrao').innerText = state.padrao;
+            state.iq = document.getElementById('input-iq').value;
+            
+            state.incluirTransporte = document.getElementById('check-transporte').checked;
+            const boxT = document.getElementById('box-transporte');
+            if (state.incluirTransporte) {
+                boxT.style.opacity = '1'; boxT.style.pointerEvents = 'auto';
+            } else {
+                boxT.style.opacity = '0.4'; boxT.style.pointerEvents = 'none';
+            }
+            
+            state.custoDiarioTransporte = parseFloat(document.getElementById('input-transporte').value) || 0;
+            state.diasUteis = parseInt(document.getElementById('input-dias').value) || 0;
+            state.dependentesCreche = parseInt(document.getElementById('input-creche').value) || 0;
+            state.dependentesIrpf = parseInt(document.getElementById('input-irpf').value) || 0;
+            
+            state.incluirFerias = document.getElementById('check-ferias').checked;
+            state.decimoSazonal = document.getElementById('select-decimo').value;
+            
+            render();
+        }
+
+        window.onload = () => {
+            document.getElementById('input-padrao').value = 1;
+            setNivel('D');
+        };
+    </script>
+</body>
+</html>
